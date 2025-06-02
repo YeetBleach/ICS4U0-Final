@@ -11,8 +11,6 @@ public class tester {
         int k3 = 32; // Unicode shift
         String encryptedMsg = cipher.encrypt(msg, k1, k2, k3);
         System.out.println(encryptedMsg);
-
-        StringBuilder reversed = new StringBuilder("104");
-        System.out.println(reversed.reverse());
+        System.out.println(cipher.getIntMsg());
     }
 }

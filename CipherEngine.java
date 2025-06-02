@@ -4,6 +4,7 @@ public class CipherEngine{
     private String[] msgArr;
     private ArrayList <String> wordArr = new ArrayList<>();
     private ArrayList <String> uniArr = new ArrayList<>();
+    private String intMsg  = "";
 
     public String encrypt(String msg, int k1, String k2, int k3){
         return encryptUnicode(encryptCaesar(msg, k1, k2), k2, k3);
@@ -58,19 +59,25 @@ public class CipherEngine{
                 if (k2.equals("LOWER") && unicodeChar.length() < 3) { // When key2 is lowercase, ensure Unicode values are 3 digits
                     unicodeChar = "0" + unicodeChar;
                 }
+                intMsg += String.valueOf(Integer.parseInt(mirror(unicodeChar))); // Append the Unicode value to the integer message
                 unicodeChar = String.valueOf(((char) Integer.parseInt(mirror(unicodeChar)))); //mirror the uni value and convert back to character then to string
                 wordBuilder.append(unicodeChar); // Append the mirrored character to the word
+
             }
             result.append(wordBuilder).append(" "); // Append complete word with space
         }
         return result.toString().trim(); // Remove trailing space
     }
 
-    private String decryptUnicode(String msg, String k2, int k3){
-        msgArr = msg.split(""); // Split the message into its characters
-        StringBuilder result = new StringBuilder();
+//    private String decryptUnicode(String msg, String k2, int k3){
+//        msgArr = msg.split(""); // Split the message into its characters
+//        StringBuilder result = new StringBuilder();
+//
+//
+//    }
 
-
+    public String getIntMsg(){
+        return intMsg;
     }
 
 }
