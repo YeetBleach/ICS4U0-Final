@@ -1,87 +1,92 @@
-import java.util.ArrayList;
-public class CipherEngine{
-    private String[] msgArr;
-    private ArrayList <String> wordArr = new ArrayList<>();
-    private ArrayList <String> uniArr = new ArrayList<>();
-    private String intMsg  = "";
+public class CipherEngine{;
+    private String authValue = "";
+
+
     public String encrypt(String msg, int k1, String k2, int k3){
         return encryptUnicode(encryptCaesar(msg, k1, k2), k2, k3);
     }
-    //    public String decrypt(String msg, int k1, String k2, int k3){
-//        return decryptCaesar(decryptUnicode(msg, k2, k3), k1, k2);
-//    }
-    private String encryptCaesar(String msg, int k1, String k2){
-        String s=" ";
-        for(int i=0; i<msg.length(); i++){
-            char c = (char) (msg.charAt(i) + k1);
-            if (c > 'z') {
-                s += (char)(msg.charAt(i) - (26-k1));
-            }
-            else{
-                s += (char) (msg.charAt(i) + k1);
+        public String decrypt(String msg, int k1, String k2, int k3){
+        return decryptCaesar(decryptUnicode(msg, k2, k3), k1, k2);
+    }
+    private String encryptCaesar(String msg, int k1, String k2) {
+        StringBuilder result = new StringBuilder();
+        msg = k2.equals("UPPER") ? msg.toUpperCase() : msg.toLowerCase(); //Upper or lower case based on k2
+        for (char character : msg.toCharArray()) {
+            if (Character.isLetter(character)) {
+                char base = Character.isUpperCase(character) ? 'A' : 'a'; // determine base character based on upper or lower case
+                int originalAlphabetPosition = character - base;
+                int newAlphabetPosition = (originalAlphabetPosition + k1) % 26; // wrap around
+                char newCharacter = (char) (base + newAlphabetPosition);
+                result.append(newCharacter);
+            } else {
+                result.append(character);
             }
         }
-        return k2.equals("UPPER") ? s.toUpperCase() : s.toLowerCase();
+        return result.toString();
     }
     private String decryptCaesar(String msg, int k1, String k2){
-        String s=" ";
-        for(int i=0; i<msg.length(); i++){
-            char c = (char) (msg.charAt(i) - k1);
-            if (c < 'a') {
-                c = (char) (c + 26);
-            }
-            else{
-                s += (char) (msg.charAt(i) - k1);
+        StringBuilder result = new StringBuilder();
+        msg = k2.equals("UPPER") ? msg.toUpperCase() : msg.toLowerCase();
+        for (char character : msg.toCharArray()) {
+            if (Character.isLetter(character)) {
+                char base = Character.isUpperCase(character) ? 'A' : 'a';
+                int originalAlphabetPosition = character - base;
+                int newAlphabetPosition = (originalAlphabetPosition - k1 + 26) % 26; // wrap around
+                char newCharacter = (char) (base + newAlphabetPosition);
+                result.append(newCharacter);
+            } else {
+                result.append(character);
             }
         }
-        return k2.equals("UPPER") ? s.toUpperCase() : s.toLowerCase();
+        return result.toString();
     }
+
+
     //Method to mirror a string
     private String mirror(String msg){
         StringBuilder reversed = new StringBuilder(msg);
         return reversed.reverse().toString();
     }
     private String encryptUnicode(String msg, String k2, int k3){
-        msgArr = msg.split(" "); // Split the message into its words
+        String[] msgArr = msg.split(" "); // Split the message into its words
         StringBuilder result = new StringBuilder();
-        intMsg = ""; // Reset intMsg for each encryption
+        authValue = ""; // Reset authValue for each encryption
 
         for (String word : msgArr){
             StringBuilder wordBuilder = new StringBuilder();
             for (char c : word.toCharArray()) { // Split each word into its characters
-                // Step 1: Convert character to Unicode value and pad to 3 digits
+                // Pad the unicode value to 3 digits
                 String unicodeChar = String.format("%03d", (int) c);
 
-                // Step 2: Mirror the Unicode value
+                // mirror the unicode value
                 String mirroredUnicode = mirror(unicodeChar);
 
-                // Step 3: Add k3 to the mirrored value (no wrapping needed if k3 is limited)
+                // shift by k3 through addition
                 int shiftedValue = Integer.parseInt(mirroredUnicode) + k3;
 
-                // Add to integer message for tracking
-                intMsg += String.valueOf(shiftedValue);
+                // Add to authValue for authentication
+                authValue += String.valueOf(shiftedValue);
 
                 // Convert back to character and append to word
                 char encryptedChar = (char) shiftedValue;
                 wordBuilder.append(encryptedChar);
             }
-            result.append(wordBuilder).append(" "); // Append complete word with space
+            result.append(wordBuilder).append(" ");
         }
-        return result.toString().trim(); // Remove trailing space
+        return result.toString().trim();
     }
-    public String decryptUnicode(String msg, String k2, int k3){
-        msgArr = msg.split(" "); // Split the message into its words
+    private String decryptUnicode(String msg, String k2, int k3){
+        String[] msgArr = msg.split(" "); // Split the message into its words
         StringBuilder result = new StringBuilder();
 
         for (String word : msgArr){
             StringBuilder wordBuilder = new StringBuilder();
             for (char c : word.toCharArray()) { // Split each word into its characters
-                int encryptedValue = (int) c;
 
-                // Step 1: Subtract k3 to get the mirrored Unicode value
-                int mirroredValue = encryptedValue - k3;
+                // convert to unicode value and subtract k3
+                int mirroredValue = (int) c - k3;
 
-                // Step 2: Mirror back to get original 3-digit Unicode
+                // Pad to 3 digits and mirror it
                 String mirroredStr = String.format("%03d", mirroredValue);
                 String originalUnicodeStr = mirror(mirroredStr);
 
@@ -94,7 +99,7 @@ public class CipherEngine{
         }
         return result.toString().trim(); // Remove trailing space
     }
-    public String getIntMsg(){
-        return intMsg;
+    public String getAuthValue(){
+        return authValue;
     }
 }
