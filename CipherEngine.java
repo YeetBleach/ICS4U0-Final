@@ -5,7 +5,7 @@ public class CipherEngine{;
     public String encrypt(String msg, int k1, String k2, int k3){
         return encryptUnicode(encryptCaesar(msg, k1, k2), k2, k3);
     }
-        public String decrypt(String msg, int k1, String k2, int k3){
+    public String decrypt(String msg, int k1, String k2, int k3){
         return decryptCaesar(decryptUnicode(msg, k2, k3), k1, k2);
     }
     private String encryptCaesar(String msg, int k1, String k2) {
@@ -90,7 +90,8 @@ public class CipherEngine{;
                 String mirroredStr = String.format("%03d", mirroredValue);
                 String originalUnicodeStr = mirror(mirroredStr);
 
-                // Step 3: Convert back to original character
+                //Convert back to character and append to word
+
                 int originalUnicode = Integer.parseInt(originalUnicodeStr);
                 char originalChar = (char) originalUnicode;
                 wordBuilder.append(originalChar);
