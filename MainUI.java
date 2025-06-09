@@ -1,6 +1,9 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
+import java.math.BigInteger;
 
 public class MainUI extends JFrame{
     private JTextField origMsg;
@@ -8,8 +11,11 @@ public class MainUI extends JFrame{
     private JTextField verificationField;
     private JTextField secretKeyField;
     private JTextField verify;
+    private boolean canDecrypt=false;
 
-    private JButton encryptButton, decryptButton, signButton, verifyButton;
+    private JLabel msgPromptLabel;
+
+    private JButton encryptButton, decryptButton, signButton, verifyButton, resetButton, copyButton;
 
     // Changed to JTextField for copyable functionality (single line)
     private JTextField ciphMsgField;
@@ -17,21 +23,30 @@ public class MainUI extends JFrame{
     private JTextField decryptedMsgField;
 
     private final CipherEngine cipherEngine;
+    private final Authenticator authenticator;
+    private final KeyManager keyManager;
+
+    private boolean ciphering = false;
 
     public MainUI(){
         this.cipherEngine = new CipherEngine();
+        this.authenticator= new Authenticator();
+        this.keyManager= new KeyManager();
         this.setTitle("Cipher Engine");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(800, 600);
+        this.setSize(700, 500);
         this.setLayout(new BorderLayout());
+        this.setTitle("Cipher Engine");
+
 
         this.secretKeyField = placeHolder("Secret Key");
         this.verificationField = placeHolder("Enter Verification Code");
 
         JPanel keyPanel = new JPanel();
-        keyPanel.setLayout(new FlowLayout());
+        keyPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+        keyPanel.setLayout(new GridLayout(1, 5, 20, 10));
         keyPanel.add(this.keyField1 = placeHolder("Key 1"));
-        keyPanel.add(this.keyField2 = placeHolder("Key 2"));
+        keyPanel.add(this.keyField2 = placeHolder("Key 2 (UPPER/LOWER)"));
         keyPanel.add(this.keyField3 = placeHolder("Key 3"));
         keyPanel.add(this.secretKeyField = placeHolder("Secret Key"));
         keyPanel.add(this.verificationField = placeHolder("Verification Code"));
@@ -40,23 +55,27 @@ public class MainUI extends JFrame{
         buttonPanel.setLayout(new FlowLayout());
         buttonPanel.add(this.encryptButton = new JButton("Encrypt"));
         buttonPanel.add(this.decryptButton = new JButton("Decrypt"));
+        buttonPanel.add(this.copyButton = new JButton("Copy"));
         buttonPanel.add(this.signButton = new JButton("Sign"));
         buttonPanel.add(this.verifyButton = new JButton("Verify"));
+        buttonPanel.add(this.resetButton = new JButton("Reset"));
+
+
 
         JPanel messagePanel = new JPanel();
         messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
-        JLabel msgPromptLabel = new JLabel("Enter Message:");
+        this.msgPromptLabel = new JLabel("Enter Message:");
         this.origMsg = new JTextField(10);
         JLabel ciphMsgLabel = new JLabel("Encoded Sentence:");
         JLabel authMsgLabel = new JLabel("Authentication Result:");
         JLabel decryptedMsgLabel = new JLabel("Decrypted Message:");
 
         // Create copyable text fields
-        this.ciphMsgField = createCopyableTextField();
-        this.authMsgField = createCopyableTextField();
-        this.decryptedMsgField = createCopyableTextField();
+        this.ciphMsgField = copyableTxtField();
+        this.authMsgField = copyableTxtField();
+        this.decryptedMsgField = copyableTxtField();
 
-        msgPromptLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        this.msgPromptLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         this.origMsg.setAlignmentX(Component.LEFT_ALIGNMENT);
         ciphMsgLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         this.ciphMsgField.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -86,10 +105,106 @@ public class MainUI extends JFrame{
         this.add(buttonPanel, BorderLayout.SOUTH);
 
         this.setVisible(true);
+
+        encryptButton.addActionListener(e ->{
+            try {
+                if(keyField2.getText().toUpperCase().equals("UPPER")||keyField2.getText().toUpperCase().equals("LOWER")){
+                    String msg = origMsg.getText();
+                    keyManager.saveKey(Integer.parseInt(keyField1.getText()), Integer.parseInt(keyField3.getText()));
+                    keyManager.saveKey(keyField2.getText().toUpperCase());
+                    keyManager.setVerifyKey(Integer.parseInt(secretKeyField.getText()));
+                    authenticator.setKeys(keyManager);
+                    String encryptedMsg=cipherEngine.encrypt(msg, Integer.parseInt(keyField1.getText()), keyField2.getText().toUpperCase(), Integer.parseInt(keyField3.getText()));
+                    this.ciphMsgField.setText(encryptedMsg);
+                    authenticator.setEntireCode(cipherEngine.getAuthValue());
+                    this.origMsg.setText("");
+                }
+                else{
+                    JOptionPane.showMessageDialog(this, "Please enter 'Upper' or 'Lower' for key2");
+                }
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numeric input for keys.");
+            }
+        });
+
+        this.decryptButton.addActionListener(e -> {;
+            if (canDecrypt==true){
+                String msg = this.ciphMsgField.getText();
+                int k1 = Integer.parseInt(this.keyField1.getText());
+                String k2 = this.keyField2.getText().toUpperCase();
+                int k3 = Integer.parseInt(this.keyField3.getText());
+                String decryptedMsg = cipherEngine.decrypt(msg, k1, k2, k3);
+                this.decryptedMsgField.setText(decryptedMsg);
+            }
+            else{
+                JOptionPane.showMessageDialog(this, "Not authorized for decryption");
+            }
+        });
+
+        this.copyButton.addActionListener(e -> {
+            String ciphMsg = this.ciphMsgField.getText();
+            String decryptedMsg = this.decryptedMsgField.getText();
+
+            if (ciphering && !ciphMsg.isEmpty()){
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(ciphMsg), null);
+            }
+            if (!ciphering && !decryptedMsg.isEmpty()){
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(decryptedMsg), null);
+            }
+        });
+
+        this.resetButton.addActionListener(e -> {
+            this.origMsg.setText("");
+            this.remove(this.keyField1);
+            this.remove(this.keyField2);
+            this.remove(this.keyField3);
+            this.remove(this.secretKeyField);
+            this.remove(this.verificationField);
+
+            this.keyField1 = placeHolder("Key 1");
+            this.keyField2 = placeHolder("Key 2 (UPPER/LOWER)");
+            this.keyField3 = placeHolder("Key 3");
+            this.secretKeyField = placeHolder("Secret Key");
+            this.verificationField = placeHolder("Verification Code");
+
+            ((JPanel)this.getContentPane().getComponent(0)).removeAll();
+            keyPanel.add(this.keyField1);
+            keyPanel.add(this.keyField2);
+            keyPanel.add(this.keyField3);
+            keyPanel.add(this.secretKeyField);
+            keyPanel.add(this.verificationField);
+
+            this.ciphMsgField.setText("");
+            this.authMsgField.setText("");
+            this.decryptedMsgField.setText("");
+
+            keyPanel.revalidate();
+            keyPanel.repaint();
+        });
+
+        this.verifyButton.addActionListener(e -> {
+            try{
+                if(authenticator.getAuthCode().equals(new BigInteger("0"))){
+                    JOptionPane.showMessageDialog(this, "Please click the sign button to generate an authentication code");
+                }
+                else{
+                    canDecrypt=authenticator.verify(verificationField.getText());
+                    authMsgField.setText("Decryption state is "+canDecrypt);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter valid numeric input.");
+            }
+        });
+
+        this.signButton.addActionListener(e->{
+            authenticator.setAuthCode();
+        });
+
     }
 
     // Method to create a copyable text field that's read-only
-    private JTextField createCopyableTextField() {
+    private JTextField copyableTxtField() {
         JTextField textField = new JTextField(1);
         textField.setEditable(false);
         textField.setBackground(Color.WHITE);
@@ -124,20 +239,6 @@ public class MainUI extends JFrame{
                 }
             }
         });
-
         return textField;
-    }
-
-    // Getter methods to access the copyable text fields
-    public JTextField getCiphMsgField() {
-        return ciphMsgField;
-    }
-
-    public JTextField getAuthMsgField() {
-        return authMsgField;
-    }
-
-    public JTextField getDecryptedMsgField() {
-        return decryptedMsgField;
     }
 }
