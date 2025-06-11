@@ -3,10 +3,10 @@ public class CipherEngine{;
 
 
     public String encrypt(String msg, int k1, String k2, int k3){
-        return encryptUnicode(encryptCaesar(msg, k1, k2), k3);
+        return encryptUnicode(encryptCaesar(msg, k1, k2), k2, k3);
     }
     public String decrypt(String msg, int k1, String k2, int k3){
-        return decryptCaesar(decryptUnicode(msg, k3), k1, k2);
+        return decryptCaesar(decryptUnicode(msg, k2, k3), k1, k2);
     }
     private String encryptCaesar(String msg, int k1, String k2) {
         StringBuilder result = new StringBuilder();
@@ -47,7 +47,7 @@ public class CipherEngine{;
         StringBuilder reversed = new StringBuilder(msg);
         return reversed.reverse().toString();
     }
-    private String encryptUnicode(String msg, int k3){
+    private String encryptUnicode(String msg, String k2, int k3){
         String[] msgArr = msg.split(" "); // Split the message into its words
         StringBuilder result = new StringBuilder();
         authValue = ""; // Reset authValue for each encryption
@@ -75,7 +75,7 @@ public class CipherEngine{;
         }
         return result.toString().trim();
     }
-    private String decryptUnicode(String msg, int k3){
+    private String decryptUnicode(String msg, String k2, int k3){
         String[] msgArr = msg.split(" "); // Split the message into its words
         StringBuilder result = new StringBuilder();
 

@@ -10,6 +10,7 @@ public class Authenticator{
         bank=keys;
     }
     public void setEntireCode(String code){
+        System.out.println(code);
         wholeCode=new BigInteger(code);
         authCode= new BigInteger("0");
     }
@@ -41,4 +42,3 @@ public class Authenticator{
         return authCode.equals(new BigInteger(value));
     }
 }
-

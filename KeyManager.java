@@ -2,11 +2,11 @@ public class KeyManager{
     private int key1, key3, verifyKey;
     private String key2;
 
-    public void saveIntKey(int x, int y){
+    public void saveKey(int x, int y){
         key1=x;
         key3=y;
     }
-    public void setStrKey(String m){
+    public void saveKey(String m){
         key2=m;
     }
     public void setVerifyKey(int x){
