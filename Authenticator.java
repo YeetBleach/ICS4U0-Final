@@ -26,11 +26,14 @@ public class Authenticator{
         if (startNum >= 0 &&startNum+length>codeString.length()){
             String newCodeString=codeString.substring(startNum, codeString.length());
             authCode =new BigInteger(newCodeString);
+            System.out.println(authCode);
         }
         else{
             String newCodeString=codeString.substring(startNum, startNum + length);
             authCode =new BigInteger(newCodeString);
+            System.out.println(authCode);
         }
+
     }
 
     public BigInteger getAuthCode(){
